@@ -10,5 +10,5 @@ export const products = mysqlTable("products", {
   stock: int("stock").default(0),
   categoryId: int("category_id").references(() => categories.id),
   imageUrl: varchar("image_url", { length: 255 }),
-  isDeleted: boolean("is_deleted").default(false)
+  // isDeleted: boolean("is_deleted").default(false)
 });

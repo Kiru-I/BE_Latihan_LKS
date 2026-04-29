@@ -43,7 +43,6 @@ CREATE TABLE `products` (
 	`stock` int DEFAULT 0,
 	`category_id` int,
 	`image_url` varchar(255),
-	`is_deleted` boolean DEFAULT false,
 	CONSTRAINT `products_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint

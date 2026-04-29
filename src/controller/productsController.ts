@@ -1,66 +1,74 @@
-import { db } from "../db/index.js";
 import { ProductModel } from "../model/productsModel.js";
 import { uploadImage } from "../utils/uploadImage.js";
 
+// helper
+function getSingleFile(input: any): File | null {
+  if (input instanceof File) return input;
+  if (Array.isArray(input) && input[0] instanceof File) return input[0];
+  return null;
+}
+
 export const productController = {
-  async getAll(c: any) {
-    const products = await ProductModel.getAll();
-    return c.json({ message: "Product fetched", data: products }, 200);
-  },
+async getAll(c: any) {
+  const page = c.req.query("page");
+  const limit = c.req.query("limit");
+
+  const products = await ProductModel.getAll(
+    page ? Number(page) : undefined,
+    limit ? Number(limit) : undefined
+  );
+
+  return c.json({ data: products });
+},
 
   async getById(c: any) {
     const id = Number(c.req.param("id"));
     const product = (await ProductModel.getById(id))[0];
-    if (!product) return c.json({ error: "Product not found" }, 404);
+
+    if (!product) {
+      return c.json({ error: "Product not found" }, 404);
+    }
+
     return c.json(product);
   },
 
   async getByCategoryId(c: any) {
     const categoryId = Number(c.req.param("categoryId"));
-    const products = await ProductModel.getByCategoryId(categoryId);
-    return c.json(products);
+    const result = await ProductModel.getByCategoryId(categoryId);
+    return c.json(result);
   },
 
   async search(c: any) {
     try {
       const query = String(c.req.query("q") || "").trim();
-      if (!query) return c.json({ error: "Query cannot be empty" }, 400);
+
+      if (!query) {
+        return c.json({ error: "Query cannot be empty" }, 400);
+      }
 
       const results = await ProductModel.search(query);
       return c.json(results);
     } catch (err: any) {
-      console.error(err); // logs real SQL errors
       return c.json({ error: err.message }, 500);
     }
   },
-// create
+
   async create(c: any) {
     try {
       const body = await c.req.parseBody();
-      
-      let imageFile: File | null = null;
 
-      if (body.image instanceof File) {
-        imageFile = body.image;
-      } else if (Array.isArray(body.image) && body.image[0] instanceof File) {
-        imageFile = body.image[0];
-      }
-
-      console.log("IMAGE:", imageFile);
-      
+      const imageFile = getSingleFile(body.image);
       const uploaded = imageFile ? await uploadImage(imageFile) : null;
 
-      console.log("UPLOADED:", uploaded);
-
       const data = {
-        name: body.name,
-        description: body.description,
-        price: Number(body.price),       // 🔥 fix type
-        stock: Number(body.stock || 0),  // 🔥 fix type + default
+        name: String(body.name),
+        description: String(body.description),
+        price: Number(body.price),
+        stock: Number(body.stock ?? 0),
         categoryId: Number(body.categoryId),
-        imageUrl: uploaded?.url || null
-      }
-
+        imageUrl: uploaded?.url || null,
+      };
+      console.log(data)
       const inserted = await ProductModel.create(data);
 
       return c.json(inserted);
@@ -72,8 +80,25 @@ export const productController = {
   async update(c: any) {
     try {
       const id = Number(c.req.param("id"));
-      const updates = await c.req.json();
+      const body = await c.req.parseBody();
+
+      const imageFile = getSingleFile(body.image);
+      const uploaded = imageFile ? await uploadImage(imageFile) : null;
+
+      const updates: any = {};
+
+      if (body.name !== undefined) updates.name = String(body.name);
+      if (body.description !== undefined) updates.description = String(body.description);
+      if (body.price !== undefined) updates.price = Number(body.price);
+      if (body.stock !== undefined) updates.stock = Number(body.stock);
+      if (body.categoryId !== undefined) updates.categoryId = Number(body.categoryId);
+
+      if (uploaded?.url) {
+        updates.imageUrl = uploaded.url;
+      }
+
       await ProductModel.update(id, updates);
+
       return c.json({ message: "Product updated" });
     } catch (err: any) {
       return c.json({ error: err.message }, 404);
@@ -88,5 +113,5 @@ export const productController = {
     } catch (err: any) {
       return c.json({ error: err.message }, 404);
     }
-  }
+  },
 };
