@@ -33,7 +33,7 @@ export const productController = {
       return c.json({ error: err.message }, 500);
     }
   },
-
+// create
   async create(c: any) {
     try {
       const body = await c.req.parseBody();
