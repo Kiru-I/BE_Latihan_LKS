@@ -16,6 +16,7 @@ OrdersRouter.get('/', UserController.authMiddleware, UserController.adminMiddlew
 OrdersRouter.get('/user', UserController.authMiddleware, OrdersController.getByUserId);
 OrdersRouter.get('/status', UserController.authMiddleware, UserController.adminMiddleware, OrdersController.getByStatus);
 OrdersRouter.get('/:id', UserController.authMiddleware, UserController.adminMiddleware, OrdersController.getById);
+OrdersRouter.patch('/status/:id', UserController.authMiddleware, UserController.adminMiddleware, OrdersController.updateStatus)
 
 
 // Admin-only routes

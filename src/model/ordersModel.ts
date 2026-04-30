@@ -2,6 +2,7 @@ import { db } from "../db/index.js";
 import { eq } from "drizzle-orm";
 import { orders } from "../db/schema/orders.js";
 import { orderItems } from "../db/schema/orderitems.js";
+import { users } from "../db/schema/users.js";
 
 type OrdersCreateInput = {
   userId: number;
@@ -16,17 +17,38 @@ type OrdersUpdateInput = Partial<OrdersCreateInput>;
 type OrderStatus = "pending" | "paid" | "shipped" | "delivered";
 
 export const OrdersModel = {
-  getAll() {
-    return db.select().from(orders);
+  getAll(page?: number, limit?: number) {
+    const query = db
+      .select({
+        id: orders.id,
+        name: orders.name,
+        phone: orders.phone,
+        address: orders.address,
+        shipping: orders.shipping,
+        payment: orders.payment,
+        totalPrice: orders.totalPrice,
+        status: orders.status,
+        users: users.name,
+        createdAt: orders.createdAt
+      })
+      .from(orders)
+      .leftJoin(users, eq(orders.userId, users.id));
+
+    if (page && limit) {
+      const offset = (page - 1) * limit;
+      query.limit(limit).offset(offset);
+    }
+
+    return query;
   },
 
   getById(id: number) {
     return db.select().from(orders).where(eq(orders.id, id));
   },
 
-getByStatus(status: OrderStatus) {
-  return db.select().from(orders).where(eq(orders.status, status));
-},
+  getByStatus(status: OrderStatus) {
+    return db.select().from(orders).where(eq(orders.status, status));
+  },
 
   getByUserId(id: number){
     return db.select().from(orders).where(eq(orders.userId, id));
@@ -63,6 +85,13 @@ getByStatus(status: OrderStatus) {
       return result;
     });
   },
+
+  async updateStatus(id: number, status: OrderStatus){
+    return await db
+    .update(orders)
+    .set({status})
+    .where(eq(orders.id, id))
+  }
   // uploadImage(id: number, imagePath: string) {
   //   return db
   //     .update(orders)

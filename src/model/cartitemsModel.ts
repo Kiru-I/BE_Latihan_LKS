@@ -29,6 +29,7 @@ getByUser(userId: number) {
       name: products.name,
       price: products.price,
       image: products.imageUrl,
+      stock: products.stock,
       category: categories.name
     })
     .from(cartitems)

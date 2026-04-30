@@ -25,8 +25,8 @@ productRouter.patch(
   productController.update
 );
 
-productRouter.patch(
-  '/:id', 
+productRouter.delete(
+  '/delete/:id', 
   UserController.authMiddleware, 
   UserController.adminMiddleware, 
   productController.delete
